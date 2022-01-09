@@ -1,0 +1,22 @@
+# main
+fastapi
+uvicorn[standard]
+gunicorn
+sqlalchemy
+sqlalchemy-filters
+pydantic
+
+# tools
+requests
+jinja2
+
+#worker
+celery[redis]
+
+# db
+redis
+psycopg2-binary
+
+# chart
+plotly
+pandas

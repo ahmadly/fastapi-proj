@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: db
+      POSTGRES_USER: db
+      POSTGRES_DB: db
+
+  cache:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  worker:
+    build:
+      context: .
+    command: celery --app core.worker worker --loglevel=INFO --autoscale=1,4
+    depends_on:
+      - db
+      - cache
+    environment:
+      DATABASE_URI: postgresql://db:db@db/db
+      CELERY_BROKER_URL: redis://cache:6379/1
+      CELERY_RESULT_BACKEND: redis://cache:6379/1
+    restart: on-failure
+    volumes:
+      - chart:/opt/src/charts
+
+  api:
+    build:
+      context: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - cache
+    environment:
+      DATABASE_URI: postgresql://db:db@db/db
+      CELERY_BROKER_URL: redis://cache:6379/1
+      CELERY_RESULT_BACKEND: redis://cache:6379/1
+    restart: on-failure
+    volumes:
+      - chart:/opt/src/charts
+
+volumes:
+  chart:
